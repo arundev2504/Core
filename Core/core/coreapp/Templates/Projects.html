@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html">
+<head lang="en">
+    {% load staticfiles %}
+    <meta charset="UTF-8">
+    <!--<link href="{% static 'css/style.css'  %}" rel="stylesheet" type="text/css" />-->
+    <!--<link href="{% static 'bootstrap/bootstrap.min.css' %}" rel="stylesheet">-->
+    <title>Projects</title>
+
+
+
+    <link href="{% static 'bootstrap/addproject52.css' %}" type="text/css" rel="stylesheet">
+
+    <!-- Bootstrap core CSS -->
+    <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="http://getbootstrap.com/examples/dashboard/dashboard.css" rel="stylesheet">
+    <script src="./Dashboard Template for Bootstrap_files/ie-emulation-modes-warning.js"></script>
+
+</head>
+
+<!--<body>-->
+    <!--&lt;!&ndash; jQuery (necessary for Bootstrap's JavaScript plugins) &ndash;&gt;-->
+    <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>-->
+    <!--&lt;!&ndash; Include all compiled plugins (below), or include individual files as needed &ndash;&gt;-->
+    <!--<script src="{{STATICFILES_DIRS}}js/bootstrap.min.js"></script>-->
+
+    <!--<div class="container">-->
+      <!--<h2>Projects</h2>-->
+      <!--<div class="panel panel-default">-->
+          <!--{% for project in projects_list %}-->
+            <!--<div class="panel-heading">-->
+                <!--<h3>{{project.project_name}}</h3>-->
+                <!--<form action = "/demo/" method = "post">-->
+                    <!--<input type="hidden" name="csrfmiddlewaretoken" value="{% csrf_token %}">-->
+                    <!--<input type="hidden" name="repo_name" value= {{project.project_name}} />-->
+                    <!--<input type="hidden" name="clone_url" value= {{project.clone_url}} />-->
+                    <!--<input class="btn btn-info btn-lg" type="submit" name="Download" value="Download" />-->
+                <!--</form>-->
+            <!--</div>-->
+          <!--{% endfor %}-->
+      <!--</div>-->
+    <!--</div>-->
+<!--</body>-->
+
+<body>
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="./dummyurl.html">Projects</a>
+        </div>
+    </nav>
+    <div class="container-fluid">
+        <div class="col-md-offset-0 main">
+            <h3>Add project</h3>
+          <div class="at-heading">
+          	<a href="Addproject_05_01.html">Start</a>&nbsp; &gt; &nbsp;Import from GitHub
+          </div>
+          <div class="at-box1">
+            <h4>Choose the repositories to be added</h4></br>
+              {% for project in projects_list %}
+            <div class="panel-heading">
+                <form action = "/demo/" method = "post">
+                    <input type="hidden" name="repo_name" value= {{project.project_name}} />
+                    <input type="hidden" name="clone_url" value= {{project.clone_url}} />
+
+                    <div class="well well-sm">
+                        <span class="glyphicon glyphicon-book"></span><b> {{project.project_name}} </b>
+                        <!--<input class="pull-right" type="submit" name="Download" value="Download"><span class="glyphicon glyphicon-download-alt"></span></input>-->
+                        <button class="pull-right" type="submit" ><span class="glyphicon glyphicon-download-alt"></span></button>
+                    </div>
+                </form>
+            </div>
+          {% endfor %}
+          </div>
+          <div class="at-box2">
+            <h5><span class="badge">?</span> We will automatically analyse your repositories Main branch. After the first analysis you can customise which branches you want to analyse in the project settings.</h5>
+            <h5><span class="badge">?</span> The first analysis will run the recommended code patterns for your repository. You can then customise next analysis with our available code patterns.</h5>
+            <h5><span class="badge">?</span> Open source projects are <b>free</b> and are automatically set as public on Codacy.</h5>
+            <h5><span class="badge">?</span> You can also include <b>private repositories</b>. Click the button to grant additional permissions.</h5>
+            <button type="button" class="btn btn-default"><span class="glyphicon glyphicon-lock"></span><b> Include private repositories</b>
+            </button>
+          </div>
+        </div>
+    </div>
+	<footer class="footer">
+	    <div class="container">
+	    </div>
+	</footer>
+</body>
+</html>

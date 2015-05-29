@@ -1,0 +1,46 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    {% load staticfiles %}
+    <meta charset="utf-8">
+    <title>Auto Tool</title>
+	<link href="{% static 'bootstrap/addproject.css' %}" type="text/css" rel="stylesheet">
+    <!-- Bootstrap core CSS -->
+    <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="http://getbootstrap.com/examples/dashboard/dashboard.css" rel="stylesheet">
+    <script src="./Dashboard Template for Bootstrap_files/ie-emulation-modes-warning.js"></script>
+  </head>
+  <body>
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="./dummyurl.html">Projects</a>
+        </div>
+    </nav>
+    <div class="container-fluid">
+        <div class="col-md-offset-0 main">
+          <h3>Add project</h3>
+          <div class="at-heading">
+          	Start
+          </div>
+          <div class="at-box1">
+          <h4>How do you want to import your repository?</h4></br>
+          <div class="at-button-container">
+          	<button onclick="window.location='https://github.com/login/oauth/authorize?scope=user:email&client_id=6f1b7590bb85caa50b0e&client_secret=8d2642a02a2afa92d4308a62495cead5501b78dd'" type="button" class="btn btn-default btn-lg btn-block">Import from GitHub</button></br>
+          	<button type="button" class="btn btn-default btn-lg btn-block">Import from Bitbucket</button></br>
+          	<button type="button" class="btn btn-default btn-lg btn-block">Import with Git URL</button>
+          </div>
+          </div>
+          <div class="at-box2">
+          <h4>Choose how you want to import your repository to create a new project</h4>
+          </div>
+        </div>
+    </div>
+	<footer class="footer">
+	    <div class="container">
+	    </div>
+	</footer>
+</body>
+</html>
