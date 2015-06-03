@@ -4,8 +4,8 @@ from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
 class CoreUser(AbstractUser):
-    user_token = models.CharField(max_length=200)
-    user_mobile = models.IntegerField(null=True)
+    user_token = models.CharField(max_length=200, blank = True, null = True)
+    user_mobile = models.IntegerField(blank = True, null = True)
 
 
 class Project(models.Model):

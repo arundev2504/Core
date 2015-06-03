@@ -3,70 +3,80 @@ from django.shortcuts import render_to_response
 from .models import CoreUser,Project
 from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
+from django.http import  HttpResponse, HttpResponseRedirect
 import requests
 import json
 import pickle
 import os
 import subprocess
 
-# Create your views here.
+
 def home(request):
-    return render_to_response('index.html')
+"""
+
+The view function for showing different methods of importing repositories.
+
+"""
+
+    with open('core/core.conf', 'r') as conf_file:
+        conf = json.load(conf_file)
+    client_id = conf["GITHUB_CLIENT_ID"]
+    client_secret = conf["GITHUB_CLIENT_SECRET"]
+    return render_to_response('index.html',{'client_id':client_id, 'client_secret':client_secret}, RequestContext(request))
 
 
 def callback(request):
+"""
+
+The function to handle the callback response of GitHub API.
+
+"""
+
     code = request.META['QUERY_STRING'][5:]
     response = requests.post('https://github.com/login/oauth/access_token',params={'code':code,'client_id':'6f1b7590bb85caa50b0e','client_secret':'8d2642a02a2afa92d4308a62495cead5501b78dd'},headers={'Content-Type':'application/json','accept':'application/json'})
     if response.status_code == 200:
         login_info = response.json()
-        pickle.dump(login_info, open("auth_data.p", "wb"))
-        user_info_url = 'https://api.github.com/user?access_token=%s'% login_info['access_token']
+        access_token = login_info['access_token']
+        # pickle.dump(login_info, open("auth_data.p", "wb"))
+        user_info_url = 'https://api.github.com/user?access_token=%s'% access_token
         prof_data = requests.get(user_info_url)
-        if prof_data.status_code == 200:
-            print('Here is the prof info')
-            print(prof_data.json())
-            response = requests.get('https://api.github.com/user/repos?per_page=100&access_token=%s' % login_info['access_token'])
-            projects_list = response.json()
-            projects = []
-            for project_dict in projects_list:
-                print(project_dict)
-                project = Project.objects.create()
-                project.project_name = project_dict['name']
-                project.clone_url = project_dict['clone_url']
-                project.repo_url = project_dict['url']
-                projects.append(project)
-            return render_to_response('projects.html',{'projects_list':projects}, context_instance=RequestContext(request))
-            # return render_to_response('Callback.html')
+        username = prof_data.json()['login']
+        obj, created = CoreUser.objects.get_or_create(username=username)
+        obj.user_token = access_token
+        obj.save()
+        response = HttpResponseRedirect( '/projects/' )
+        response.set_cookie( 'core_username', username )
+        return response
+    else:
         return render_to_response('index.html')
-    return render_to_response('index.html')
 
 
 def projects(request):
-    login_info = pickle.load(open("auth_data.p", "rb"))
-    print(login_info)
-    response = requests.get('https://api.github.com/user/repos?per_page=100&access_token=%s' % login_info['access_token'])
-    projects_list = response.json()
-    projects = []
-    for project_dict in projects_list:
-        print(project_dict)
-        project = Project.objects.create()
-        project.project_name = project_dict['name']
-        project.clone_url = project_dict['clone_url']
-        project.repo_url = project_dict['url']
-        projects.append(project)
-    print(projects)
-    # git_url = ''
-    # for project in projects:
-    #     print(project.clone_url)
-    #     git_url = project.clone_url
-    #
-    # print('starting...')
-    # print(os.getcwd())
-    # path = '{}/github/user/repos'.format(os.getcwd())
-    # print('path is : ' + path)
-    # url = "git clone {} {}".format(git_url,path)
-    # os.system("git clone {} {}".format(git_url,path))
-    return render_to_response('projects.html',{'projects_list':projects}, context_instance=RequestContext(request))
+"""
+
+The view function to display all projects from the user's GitHub account
+
+"""
+
+    if request.COOKIES.has_key( 'core_username' ):
+        # login_info = pickle.load(open("auth_data.p", "rb"))
+        username = request.COOKIES['core_username']
+        user = CoreUser.objects.get(username=username)
+        access_token = user.user_token
+        response = requests.get('https://api.github.com/user/repos?per_page=100&access_token=%s' % access_token)
+        projects_list = response.json()
+        projects = []
+        for project_dict in projects_list:
+            print(project_dict)
+            project = Project.objects.create()
+            project.project_name = project_dict['name']
+            project.clone_url = project_dict['clone_url']
+            project.repo_url = project_dict['url']
+            projects.append(project)
+        response = render_to_response('Projects.html',{'projects_list':projects}, RequestContext(request))
+        return response
+    else:
+        render_to_response('index.html')
 
 
 def sources(request):
@@ -85,8 +95,3 @@ def demo(request):
     #     print('Directory already exists')
 
     return render_to_response('test.html',{'repo_name':repo_name,'clone_url':clone_url})
-
-#   Create user object
-def create_user(user_data):
-    username = user_data['username']
-    user = CoreUser.objects.get_or_create(user_data['username'])
