@@ -96,10 +96,6 @@ DATABASES = {
 }
 
 
-AUTHENTICATION_BACKENDS = (
-    'social_auth.backends.contrib.github.GithubBackend',
-)
-
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
 
