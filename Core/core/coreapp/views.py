@@ -9,15 +9,15 @@ import json
 import pickle
 import os
 import subprocess
+import re
 
 
 def home(request):
-"""
+    """
 
-The view function for showing different methods of importing repositories.
+    The view function for showing different methods of importing repositories.
 
-"""
-
+    """
     with open('core/core.conf', 'r') as conf_file:
         conf = json.load(conf_file)
     client_id = conf["GITHUB_CLIENT_ID"]
@@ -26,12 +26,11 @@ The view function for showing different methods of importing repositories.
 
 
 def callback(request):
-"""
+    """
 
-The function to handle the callback response of GitHub API.
+    The function to handle the callback response of GitHub API.
 
-"""
-
+    """
     code = request.META['QUERY_STRING'][5:]
     response = requests.post('https://github.com/login/oauth/access_token',params={'code':code,'client_id':'6f1b7590bb85caa50b0e','client_secret':'8d2642a02a2afa92d4308a62495cead5501b78dd'},headers={'Content-Type':'application/json','accept':'application/json'})
     if response.status_code == 200:
@@ -52,12 +51,11 @@ The function to handle the callback response of GitHub API.
 
 
 def projects(request):
-"""
+    """
 
-The view function to display all projects from the user's GitHub account
+    The view function to display all projects from the user's GitHub account
 
-"""
-
+    """
     if request.COOKIES.has_key( 'core_username' ):
         # login_info = pickle.load(open("auth_data.p", "rb"))
         username = request.COOKIES['core_username']
@@ -67,13 +65,18 @@ The view function to display all projects from the user's GitHub account
         projects_list = response.json()
         projects = []
         for project_dict in projects_list:
-            print(project_dict)
-            project = Project.objects.create()
-            project.project_name = project_dict['name']
+            project, created  = Project.objects.get_or_create(project_name=project_dict['name'], core_user=user)             
+            commits_url = project_dict['commits_url']
+            commits_url = re.sub('\{/sha}$', '', commits_url)
+            project.commits_url = commits_url
             project.clone_url = project_dict['clone_url']
             project.repo_url = project_dict['url']
+            project.private = project_dict['private']
+            if created == True:
+                project.save()           
             projects.append(project)
         response = render_to_response('Projects.html',{'projects_list':projects}, RequestContext(request))
+        print projects
         return response
     else:
         render_to_response('index.html')
@@ -86,6 +89,11 @@ def sources(request):
 def demo(request):
     repo_name = request.POST.get('repo_name')
     clone_url = request.POST.get('clone_url')
+    private = request.POST.get('private')
+    if private == "True":
+        project_type = "Private"
+    elif private == "False":
+        project_type = "Public"
     path = '{}/github/user/repos/{}'.format(os.getcwd(),repo_name)
     url = "git clone {} {}".format(clone_url,path)
     os.system("git clone {} {}".format(clone_url,path))
@@ -94,4 +102,4 @@ def demo(request):
     # except OSError:
     #     print('Directory already exists')
 
-    return render_to_response('test.html',{'repo_name':repo_name,'clone_url':clone_url})
+    return render_to_response('test.html',{'repo_name':repo_name,'clone_url':clone_url,'project_type':project_type})

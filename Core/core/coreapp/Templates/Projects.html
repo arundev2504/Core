@@ -63,6 +63,7 @@
                 <form action = "/demo/" method = "post">
                     <input type="hidden" name="repo_name" value= {{project.project_name}} />
                     <input type="hidden" name="clone_url" value= {{project.clone_url}} />
+                    <input type="hidden" name="private" value= {{project.private}} />             
 
                     <div class="well well-sm">
                         <span class="glyphicon glyphicon-book"></span><b> {{project.project_name}} </b>
