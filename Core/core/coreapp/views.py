@@ -4,6 +4,7 @@ from .models import CoreUser,Project
 from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
 from django.http import  HttpResponse, HttpResponseRedirect
+from os.path import expanduser
 import requests
 import json
 import pickle
@@ -15,9 +16,10 @@ import re
 def home(request):
     """
 
-    The view function for showing different methods of importing repositories.
+        The view function for showing different methods of importing repositories.
 
     """
+
     with open('core/core.conf', 'r') as conf_file:
         conf = json.load(conf_file)
     client_id = conf["GITHUB_CLIENT_ID"]
@@ -28,9 +30,10 @@ def home(request):
 def callback(request):
     """
 
-    The function to handle the callback response of GitHub API.
+        The function to handle the callback response of GitHub API.
 
     """
+
     code = request.META['QUERY_STRING'][5:]
     response = requests.post('https://github.com/login/oauth/access_token',params={'code':code,'client_id':'6f1b7590bb85caa50b0e','client_secret':'8d2642a02a2afa92d4308a62495cead5501b78dd'},headers={'Content-Type':'application/json','accept':'application/json'})
     if response.status_code == 200:
@@ -53,9 +56,10 @@ def callback(request):
 def projects(request):
     """
 
-    The view function to display all projects from the user's GitHub account
+        The view function to display all projects from the user's GitHub account
 
     """
+
     if request.COOKIES.has_key( 'core_username' ):
         # login_info = pickle.load(open("auth_data.p", "rb"))
         username = request.COOKIES['core_username']
@@ -94,7 +98,8 @@ def demo(request):
         project_type = "Private"
     elif private == "False":
         project_type = "Public"
-    path = '{}/github/user/repos/{}'.format(os.getcwd(),repo_name)
+    home = expanduser("~")
+    path = '{}/core_app/github/user/repos/{}'.format(home,repo_name)
     url = "git clone {} {}".format(clone_url,path)
     os.system("git clone {} {}".format(clone_url,path))
     # try:
