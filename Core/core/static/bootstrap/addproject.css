@@ -13,7 +13,7 @@ body{
     padding-bottom: 70px;
 }
 .at-heading{
-    width:90%;
+    width:96%;
     margin-top: 10px;
     background-color:#efefef;
     border-style: solid;
@@ -28,7 +28,7 @@ body{
     padding: 50px 5px 5px 5px;
     height:400px;
     float:left;
-    width:60%;
+    width:63%;
     background-color:#ffffff;
     border: solid;
     border-width:1px 1px 1px 1px; 
@@ -45,7 +45,7 @@ body{
     padding: 10px;
     height:400px;
     float:left;
-    width:30%;
+    width:33%;
     background-color:#ffffff;
     border: solid;
     border-width:1px 1px 1px 0px; 

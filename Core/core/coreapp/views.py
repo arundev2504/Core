@@ -13,18 +13,21 @@ import subprocess
 import re
 
 
-def home(request):
+def login(request):
     """
 
-        The view function for showing different methods of importing repositories.
+        The view function for login.
 
     """
 
-    with open('core/core.conf', 'r') as conf_file:
-        conf = json.load(conf_file)
-    client_id = conf["GITHUB_CLIENT_ID"]
-    client_secret = conf["GITHUB_CLIENT_SECRET"]
-    return render_to_response('index.html',{'client_id':client_id, 'client_secret':client_secret}, RequestContext(request))
+    if request.COOKIES.has_key( 'core_username' ):
+        return HttpResponseRedirect('/projectlist/')
+    else:
+        with open('core/core.conf', 'r') as conf_file:
+            conf = json.load(conf_file)
+        client_id = conf["GITHUB_CLIENT_ID"]
+        client_secret = conf["GITHUB_CLIENT_SECRET"] 
+        return render_to_response('login.html',{'client_id':client_id, 'client_secret':client_secret}, RequestContext(request))
 
 
 def callback(request):
@@ -43,14 +46,14 @@ def callback(request):
         user_info_url = 'https://api.github.com/user?access_token=%s'% access_token
         prof_data = requests.get(user_info_url)
         username = prof_data.json()['login']
-        obj, created = CoreUser.objects.get_or_create(username=username)
-        obj.user_token = access_token
-        obj.save()
-        response = HttpResponseRedirect( '/projects/' )
-        response.set_cookie( 'core_username', username )
-        return response
+        user_obj, created = CoreUser.objects.get_or_create(username=username)
+        user_obj.user_token = access_token
+        user_obj.save()
+        response = HttpResponseRedirect('/projectlist/')
+        response.set_cookie('core_username', username)
+        return response     
     else:
-        return render_to_response('index.html')
+        return HttpResponseRedirect('/login/')
 
 
 def projects(request):
@@ -77,34 +80,67 @@ def projects(request):
             project.repo_url = project_dict['url']
             project.private = project_dict['private']
             if created == True:
-                project.save()           
-            projects.append(project)
-        response = render_to_response('Projects.html',{'projects_list':projects}, RequestContext(request))
+                project.save()
+            if project.project_path == None:           
+                projects.append(project)
+        response = render_to_response('Projects.html',{'projects_list':projects, 'username':username}, RequestContext(request))
         print projects
         return response
     else:
-        render_to_response('index.html')
+        return HttpResponseRedirect('/login/')
 
-
-def sources(request):
-    return render_to_response('sources.html')
 
 @csrf_exempt
-def demo(request):
+def clone_projects(request):
     repo_name = request.POST.get('repo_name')
     clone_url = request.POST.get('clone_url')
     private = request.POST.get('private')
-    if private == "True":
-        project_type = "Private"
-    elif private == "False":
-        project_type = "Public"
+    username = request.POST.get('username')
     home = expanduser("~")
     path = '{}/core_app/github/user/repos/{}'.format(home,repo_name)
     url = "git clone {} {}".format(clone_url,path)
     os.system("git clone {} {}".format(clone_url,path))
+    project = Project.objects.get(core_user__username=username, project_name=repo_name)
+    project.project_path = path
+    project.save()
     # try:
     #     subprocess.call("git clone {} {}".format(clone_url,path))
     # except OSError:
     #     print('Directory already exists')
+    return HttpResponseRedirect('/projectlist/')
+    return render_to_response('test.html',{'projects':projects})
 
-    return render_to_response('test.html',{'repo_name':repo_name,'clone_url':clone_url,'project_type':project_type})
+
+def new_project(request):
+    if request.COOKIES.has_key( 'core_username' ):
+        return render_to_response('index.html')
+    else:
+        return HttpResponseRedirect('/login/')
+
+
+def project_list(request):
+    if request.COOKIES.has_key( 'core_username' ):
+        username = request.COOKIES['core_username']
+        projects = Project.objects.filter(core_user__username=username).exclude(project_path=None)
+        if projects:
+            return render_to_response('test.html',{'projects':projects})
+        else:
+            return HttpResponseRedirect('/projects/new/')
+    else:
+        return HttpResponseRedirect('/login/')
+
+
+def logout(request):
+    if request.COOKIES.has_key( 'core_username' ):
+        username = request.COOKIES['core_username']
+        user = CoreUser.objects.get(username=username)
+        user.user_token = ''
+        response = HttpResponseRedirect('/login/')
+        response.delete_cookie('core_username')
+        return response
+    else:
+        return HttpResponseRedirect('/login/')
+
+
+    
+    

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/html">
+<html>
 <head lang="en">
     {% load staticfiles %}
     <meta charset="UTF-8">
@@ -16,7 +16,6 @@
 
     <!-- Custom styles for this template -->
     <link href="http://getbootstrap.com/examples/dashboard/dashboard.css" rel="stylesheet">
-    <script src="./Dashboard Template for Bootstrap_files/ie-emulation-modes-warning.js"></script>
 
 </head>
 
@@ -47,23 +46,25 @@
 <body>
     <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
         <div class="navbar-header">
-          <a class="navbar-brand" href="./dummyurl.html">Projects</a>
+          <a class="navbar-brand" href="/projectlist/">Projects</a>
         </div>
+        <a class="pull-right navbar-brand" href="/logout/">Logout</a>
     </nav>
     <div class="container-fluid">
         <div class="col-md-offset-0 main">
             <h3>Add project</h3>
           <div class="at-heading">
-          	<a href="Addproject_05_01.html">Start</a>&nbsp; &gt; &nbsp;Import from GitHub
+          	<a href="/projects/new/">Start</a>&nbsp; &gt; &nbsp;Import from GitHub
           </div>
           <div class="at-box1">
             <h4>Choose the repositories to be added</h4></br>
               {% for project in projects_list %}
             <div class="panel-heading">
-                <form action = "/demo/" method = "post">
+                <form action = "/projects/clone/" method = "post">
                     <input type="hidden" name="repo_name" value= {{project.project_name}} />
                     <input type="hidden" name="clone_url" value= {{project.clone_url}} />
-                    <input type="hidden" name="private" value= {{project.private}} />             
+                    <input type="hidden" name="private" value= {{project.private}} /> 
+                    <input type="hidden" name="username" value= {{username}} />             
 
                     <div class="well well-sm">
                         <span class="glyphicon glyphicon-book"></span><b> {{project.project_name}} </b>

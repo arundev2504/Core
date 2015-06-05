@@ -12,6 +12,7 @@ class Project(models.Model):
     project_name = models.CharField(max_length=100)
     repo_url = models.CharField(max_length=200)
     clone_url = models.CharField(max_length=200)
-    private = models.BooleanField
+    private = models.BooleanField(default=False)
     core_user = models.ForeignKey(CoreUser, blank=True, null=True)
     commits_url = models.CharField(max_length=200)
+    project_path = models.CharField(max_length=200, blank=True, null=True)

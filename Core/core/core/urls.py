@@ -19,14 +19,16 @@ from coreapp import views
 import os
 
 urlpatterns = [
-    url(r'^admin/', include(admin.site.urls)),
-    url(r'^$', views.home, name = 'home'),
+    url(r'^admin/$', include(admin.site.urls)),
+    url(r'^login/$', views.login, name = 'login'),
+    url(r'^logout/$', views.logout, name = 'logout'),
+    url(r'^$', views.login, name = 'index'),
     # url('', include('social.apps.django_app.urls', namespace='social')),
-    url(r'^callback/', views.callback, name = 'callback'),
-    url(r'^projects/', views.projects, name = 'projects'),
-    url(r'^sources/', views.sources, name = 'sources'),
-    url(r'^demo/', views.demo, name = 'demo'),
-
+    url(r'^callback', views.callback, name = 'callback'),
+    url(r'^projectlist/$', views.project_list, name = 'projectlist'),
+    url(r'^projects/new/github/$', views.projects, name = 'projects'),
+    url(r'^projects/new/$', views.new_project, name = 'new_project'),
+    url(r'^projects/clone/$', views.clone_projects, name = 'clone_projects'),
 ]
 
 site_media = os.path.join(
