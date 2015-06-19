@@ -16,3 +16,4 @@ class Project(models.Model):
     core_user = models.ForeignKey(CoreUser, blank=True, null=True)
     commits_url = models.CharField(max_length=200)
     project_path = models.CharField(max_length=200, blank=True, null=True)
+    language = models.CharField(max_length=20, blank=True, null=True)

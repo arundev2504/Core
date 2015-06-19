@@ -5,6 +5,7 @@ from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
 from django.http import  HttpResponse, HttpResponseRedirect
 from os.path import expanduser
+from django.core.files import File
 import requests
 import json
 import pickle
@@ -20,7 +21,8 @@ def login(request):
 
     """
 
-    if request.COOKIES.has_key( 'core_username' ):
+    user = is_loggedin(request)
+    if user:
         return HttpResponseRedirect('/projectlist/')
     else:
         with open('core/core.conf', 'r') as conf_file:
@@ -51,6 +53,7 @@ def callback(request):
         user_obj.save()
         response = HttpResponseRedirect('/projectlist/')
         response.set_cookie('core_username', username)
+        response.set_cookie('token', access_token)
         return response     
     else:
         return HttpResponseRedirect('/login/')
@@ -63,10 +66,9 @@ def projects(request):
 
     """
 
-    if request.COOKIES.has_key( 'core_username' ):
+    user = is_loggedin(request)
+    if user:
         # login_info = pickle.load(open("auth_data.p", "rb"))
-        username = request.COOKIES['core_username']
-        user = CoreUser.objects.get(username=username)
         access_token = user.user_token
         response = requests.get('https://api.github.com/user/repos?per_page=100&access_token=%s' % access_token)
         projects_list = response.json()
@@ -79,68 +81,157 @@ def projects(request):
             project.clone_url = project_dict['clone_url']
             project.repo_url = project_dict['url']
             project.private = project_dict['private']
+            project.language = project_dict['language'].lower()
             if created == True:
                 project.save()
             if project.project_path == None:           
                 projects.append(project)
-        response = render_to_response('Projects.html',{'projects_list':projects, 'username':username}, RequestContext(request))
-        print projects
-        return response
+        return render_to_response('Projects.html',{'projects_list':projects, 'username':user.username}, RequestContext(request))
     else:
         return HttpResponseRedirect('/login/')
 
 
 @csrf_exempt
 def clone_projects(request):
-    repo_name = request.POST.get('repo_name')
-    clone_url = request.POST.get('clone_url')
-    private = request.POST.get('private')
-    username = request.POST.get('username')
-    home = expanduser("~")
-    path = '{}/core_app/github/user/repos/{}'.format(home,repo_name)
-    url = "git clone {} {}".format(clone_url,path)
-    os.system("git clone {} {}".format(clone_url,path))
-    project = Project.objects.get(core_user__username=username, project_name=repo_name)
-    project.project_path = path
-    project.save()
-    # try:
-    #     subprocess.call("git clone {} {}".format(clone_url,path))
-    # except OSError:
-    #     print('Directory already exists')
-    return HttpResponseRedirect('/projectlist/')
-    return render_to_response('test.html',{'projects':projects})
+    if is_loggedin(request):
+        repo_name = request.POST.get('repo_name')
+        clone_url = request.POST.get('clone_url')
+        username = request.POST.get('username')
+        home = expanduser("~")
+        path = '{}/core_app/github/user/repos/{}'.format(home,repo_name)
+        url = "git clone {} {}".format(clone_url,path)
+        os.system("git clone {} {}".format(clone_url,path))
+        project = Project.objects.get(core_user__username=username, project_name=repo_name)
+        project.project_path = path
+        project.save()
+        f = open(path+'/sonar-project.properties', 'w')
+        myfile = File(f)
+        myfile.write('sonar.language='+ project.language+'\nsonar.projectVersion=1.0\nsonar.sources=src\nsonar.sourceEncoding=UTF-8\nsonar.projectKey=' + project.project_name + '\nsonar.projectName=' + project.project_name  )
+        myfile.closed
+        f.closed
+        p = subprocess.Popen(["sonar-runner"], cwd=path)
+        return HttpResponseRedirect('/projectlist/')
+    else:
+        return HttpResponseRedirect('/login/')
 
 
 def new_project(request):
-    if request.COOKIES.has_key( 'core_username' ):
-        return render_to_response('index.html')
+    """
+
+        The view function to add a new project.
+
+    """
+
+    user = is_loggedin(request)
+    if user:
+        return render_to_response('index.html', {'username':user.username})
     else:
         return HttpResponseRedirect('/login/')
 
 
 def project_list(request):
-    if request.COOKIES.has_key( 'core_username' ):
-        username = request.COOKIES['core_username']
+    """
+
+        The view function to show the list of projects already cloned by our application.
+
+    """
+
+    user = is_loggedin(request)
+    if user:
+        username = user.username
         projects = Project.objects.filter(core_user__username=username).exclude(project_path=None)
+        p = []
+        for project in projects:
+            response = requests.get('http://localhost:9000/sonar/api/issues/search?componentKeys=%s' % project.project_name)
+            issues_list = response.json()
+            project.issues = issues_list['total']
+            p.append(project)
         if projects:
-            return render_to_response('test.html',{'projects':projects})
+            return render_to_response('project_list.html',{'projects':p, 'username':username})
         else:
             return HttpResponseRedirect('/projects/new/')
     else:
         return HttpResponseRedirect('/login/')
 
 
+def issues(request, project_id):
+    """
+    
+        The view function to list the issues of a project.
+
+    """
+
+    user = is_loggedin(request)
+    if user:
+        try:
+            project = Project.objects.get(id=project_id)
+        except Project.DoesNotExist:
+            return HttpResponse("You are not authorized to view this project details")
+        if project.core_user.username == user.username:
+            project_name = project.project_name
+            response = requests.get('http://localhost:9000/sonar/api/issues/search?componentKeys=%s' % project_name)
+            response_json = response.json()
+            issues_list = response_json['issues']
+            file_names = []
+            component_list = response_json['components']
+            for component in component_list:
+                if 'path' in component.keys():
+                    file_names.append(component['longName'])
+            return render_to_response('issues.html',{'issues':issues_list,'file_names':file_names,'username':user.username})
+        else:
+            return HttpResponse("You are not authorized to view this project details")
+    else:
+        return HttpResponseRedirect('/login/') 
+
+
 def logout(request):
-    if request.COOKIES.has_key( 'core_username' ):
-        username = request.COOKIES['core_username']
-        user = CoreUser.objects.get(username=username)
+    """ 
+
+        The function to log out an user.
+
+    """
+
+    user = is_loggedin(request)
+    if user:
         user.user_token = ''
+        user.save()
         response = HttpResponseRedirect('/login/')
         response.delete_cookie('core_username')
+        response.delete_cookie('token')
         return response
     else:
         return HttpResponseRedirect('/login/')
 
 
+def is_loggedin(request):
+    """
+
+        The function to check whether any user is logged in, if any, returns the user object.
+
+    """
+
+    if request.COOKIES.has_key('core_username') and request.COOKIES.has_key('token'):
+        username = request.COOKIES['core_username']
+        token = request.COOKIES['token']
+        user = CoreUser.objects.get(username=username)
+        if user.user_token == token:
+            return user
+        else:
+            return None
+    else:
+        return None
     
-    
+@csrf_exempt
+def get_issues_json(request):
+    if request.method == 'POST':
+        project_name = request.POST.get('project_name')
+        response = requests.get('http://localhost:9000/sonar/api/issues/search?componentKeys=%s' % project_name)
+        response_json = response.json()
+        projects = response_json['projects']
+        if projects:
+            issues_total = response_json['total']
+            projects_name = projects[0]['name']
+            msg = {'issues_no': issues_total,'projects_name': projects_name}
+            return HttpResponse(json.dumps(msg), content_type="application/json")
+        else:
+            return HttpResponse(None)

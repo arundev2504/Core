@@ -26,9 +26,11 @@ urlpatterns = [
     # url('', include('social.apps.django_app.urls', namespace='social')),
     url(r'^callback', views.callback, name = 'callback'),
     url(r'^projectlist/$', views.project_list, name = 'projectlist'),
+    url(r'^projectlist/issues/(?P<project_id>\d+)/', views.issues, name = 'issues'),
     url(r'^projects/new/github/$', views.projects, name = 'projects'),
     url(r'^projects/new/$', views.new_project, name = 'new_project'),
     url(r'^projects/clone/$', views.clone_projects, name = 'clone_projects'),
+    url(r'^issues_json/$', views.get_issues_json, name = 'issues_json'),
 ]
 
 site_media = os.path.join(

@@ -1,0 +1,25 @@
+
+.container{
+	margin-top: 40px;
+	overflow: auto;
+}
+
+.container .btn{
+    background-color: #6699dd;
+    color: #ffffff;
+}
+
+.container-projects{
+	overflow: auto;
+	padding: 5px;
+	height: 500px;
+}
+
+.footer{
+    height: 40px;
+    background-color: black;
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    width: 100%;
+}

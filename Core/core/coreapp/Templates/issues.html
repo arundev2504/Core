@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    {% load staticfiles %}
+    <meta charset="UTF-8">
+    <title>Projects</title>
+    <link href="{% static 'bootstrap/issues.css' %}" type="text/css" rel="stylesheet">
+    <!-- Bootstrap core CSS -->
+    <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+<body>
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="/projectlist/">Projects</a>
+        </div>
+        <a class="pull-right navbar-brand" href="/logout/">Logout</a>
+        <a class="pull-right navbar-brand" >{{username}}</a>
+    </nav>
+    <div class="container">
+        <ul class="list-group">
+            {% for file_name in file_names%}
+                </br><h3><span class="glyphicon glyphicon-file"></span>{{file_name}}</h3>
+                {% for issue in issues %}
+                    {% if file_name in issue.component %}
+                        {% if issue.line %}
+                            <li class="list-group-item">Issue: {{issue.message}}</br>Line No: {{issue.line}}</br>Status: {{issue.status}}, {{issue.debt}} debt</br><span class="glyphicon glyphicon-exclamation-sign severity">{{issue.severity}}</span><span class="pull-right glyphicon glyphicon-tags"> {{issue.tags.0}}</span></li>
+                        {% else %}
+                            <li class="list-group-item">Issue: {{issue.message}}</br>{{issue.status}}, {{issue.debt}} debt</br><span class="glyphicon glyphicon-exclamation-sign severity">{{issue.severity}}</span></li>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+    <footer class="footer">
+        <div class="container">
+        </div>
+    </footer>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

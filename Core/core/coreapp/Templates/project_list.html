@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Projects</title>
+
+      {% load staticfiles %}
+
+    
+    <script type="text/javascript">
+      function worker() {
+        var project_name_list = [];
+        {% for project in projects %}
+          project_name_list.push('{{project.project_name}}');
+        {% endfor %}
+        for(i = project_name_list.length - 1; i > -1; i--) {
+          project_name = project_name_list[i];
+          $.ajax({
+            url:'/issues_json/',
+            type:'POST',
+            data:{project_name:project_name},
+            // contentType:'application/json',
+            success: function(data) {
+              if (data.issues_no){
+                document.getElementById(project_name).textContent='Issues:'+data.issues_no;
+              }     
+              delete project_name_list[i]
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+            },
+            async: false
+          });
+        }
+        setTimeout(worker, 10000);
+      }
+    </script>
+    <link href="{% static 'bootstrap/projectlist.css' %}" type="text/css" rel="stylesheet">
+
+    <!-- Bootstrap -->
+    <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body onload="worker()">
+      <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="/projectlist/">Projects</a>
+        </div>
+        <a class="pull-right navbar-brand" href="/logout/">Logout</a>
+        <a class="pull-right navbar-brand" >{{username}}</a>
+    </nav>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <!-- <script src="{{STATICFILES_DIRS}}js/bootstrap.min.js"></script> -->
+
+    <div class="container">
+      <h2>Projects</h2>
+      <div>
+        <a class="btn btn-default btn-sm" href="/projects/new/"><span class="glyphicon glyphicon-plus-sign">&nbspAdd&nbspproject</span></a>        
+      </div>
+      <div class="container-projects">
+          {% for project in projects %}
+            <div class="well well-sm" onclick="location.href = '/projectlist/issues/{{project.id}}/'">
+              <h3>{{project.project_name}}</h3></br>
+              {% if project.private == True%}          
+                <span class="badge">Private</span>
+              {% else %}  
+                <span class="badge">Public</span>
+                <span class="badge" id='{{project.project_name}}'>Issues:{{project.issues}}</span> 
+              {% endif %}  
+            </div>
+          {% endfor %}        
+      </div>
+    </div>
+    <footer class="footer">
+    <div class="container">
+    </div>
+  </footer>
+  </body>
+</html>
