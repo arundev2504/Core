@@ -22,7 +22,6 @@ urlpatterns = [
     url(r'^admin/$', include(admin.site.urls)),
     url(r'^login/$', views.login, name = 'login'),
     url(r'^logout/$', views.logout, name = 'logout'),
-    url(r'^$', views.login, name = 'index'),
     # url('', include('social.apps.django_app.urls', namespace='social')),
     url(r'^callback', views.callback, name = 'callback'),
     url(r'^projectlist/$', views.project_list, name = 'projectlist'),
@@ -31,6 +30,8 @@ urlpatterns = [
     url(r'^projects/new/$', views.new_project, name = 'new_project'),
     url(r'^projects/clone/$', views.clone_projects, name = 'clone_projects'),
     url(r'^issues_json/$', views.get_issues_json, name = 'issues_json'),
+    url(r'^issues_code/$', views.get_issues_code, name = 'issues_code'),
+    url(r'^', views.login, name = 'index'),
 ]
 
 site_media = os.path.join(

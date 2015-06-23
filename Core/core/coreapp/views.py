@@ -12,7 +12,7 @@ import pickle
 import os
 import subprocess
 import re
-
+import linecache
 
 def login(request):
     """
@@ -44,7 +44,6 @@ def callback(request):
     if response.status_code == 200:
         login_info = response.json()
         access_token = login_info['access_token']
-        # pickle.dump(login_info, open("auth_data.p", "wb"))
         user_info_url = 'https://api.github.com/user?access_token=%s'% access_token
         prof_data = requests.get(user_info_url)
         username = prof_data.json()['login']
@@ -68,7 +67,6 @@ def projects(request):
 
     user = is_loggedin(request)
     if user:
-        # login_info = pickle.load(open("auth_data.p", "rb"))
         access_token = user.user_token
         response = requests.get('https://api.github.com/user/repos?per_page=100&access_token=%s' % access_token)
         projects_list = response.json()
@@ -142,7 +140,10 @@ def project_list(request):
         projects = Project.objects.filter(core_user__username=username).exclude(project_path=None)
         p = []
         for project in projects:
-            response = requests.get('http://localhost:9000/sonar/api/issues/search?componentKeys=%s' % project.project_name)
+            try:
+                response = requests.get('http://localhost:9000/sonar/api/issues/search?componentKeys=%s' % project.project_name)
+            except:
+                return HttpResponse("Sonar connection problem")
             issues_list = response.json()
             project.issues = issues_list['total']
             p.append(project)
@@ -177,7 +178,7 @@ def issues(request, project_id):
             for component in component_list:
                 if 'path' in component.keys():
                     file_names.append(component['longName'])
-            return render_to_response('issues.html',{'issues':issues_list,'file_names':file_names,'username':user.username})
+            return render_to_response('issues.html',{'project_name':project_name,'issues':issues_list,'file_names':file_names,'username':user.username})
         else:
             return HttpResponse("You are not authorized to view this project details")
     else:
@@ -221,17 +222,69 @@ def is_loggedin(request):
     else:
         return None
     
+
 @csrf_exempt
 def get_issues_json(request):
-    if request.method == 'POST':
+    """
+
+    The function to get the total number of issues for each project of a particular user in JSON format.
+
+    """
+
+    user = is_loggedin(request)
+    if user and request.method == 'GET':
+        username = user.username
+        projects_list = Project.objects.filter(core_user__username=username).exclude(project_path=None)
+        issue_details = []
+        for project in projects_list:
+            response = requests.get('http://localhost:9000/sonar/api/issues/search?componentKeys=%s' % project.project_name)
+            response_json = response.json()
+            projects = response_json['projects']
+            if projects:
+                issues_total = response_json['total']
+                projects_name = projects[0]['name']
+                msg = {'issues_no': issues_total,'projects_name': projects_name}
+                issue_details.append(msg)
+        return HttpResponse(json.dumps(issue_details), content_type="application/json")
+
+
+
+@csrf_exempt
+def get_issues_code(request):
+    """
+
+    The function to get the code of each issue along with its key in JSON format.
+
+    """
+    user = is_loggedin(request)
+    if user and request.method == 'POST':
         project_name = request.POST.get('project_name')
-        response = requests.get('http://localhost:9000/sonar/api/issues/search?componentKeys=%s' % project_name)
+        response = requests.get('http://localhost:9000/sonar/api/issues/search?componentKeys=%s' %project_name)
         response_json = response.json()
-        projects = response_json['projects']
-        if projects:
-            issues_total = response_json['total']
-            projects_name = projects[0]['name']
-            msg = {'issues_no': issues_total,'projects_name': projects_name}
-            return HttpResponse(json.dumps(msg), content_type="application/json")
-        else:
-            return HttpResponse(None)
+        issues_list = response_json['issues']
+        if not issues_list:
+            return HttpResponse("No issues found")
+        issue_code_details = []
+        for issue in issues_list:
+            if 'line' in issue.keys():
+                key = issue['key']
+                line_no = issue['line']
+                project_path = Project.objects.get(project_name=project_name).project_path
+                component_path = issue['component']
+                file_path = re.sub(project_name+':', project_path+'/', component_path)
+                if line_no == 1:
+                    start_limit = 1
+                    end_limit = 3
+                else:
+                    start_limit = line_no - 1
+                    end_limit = line_no + 1
+                code = ''
+                for i in range(start_limit,end_limit+1):
+                    text = linecache.getline(file_path, i)
+                    if i == line_no:
+                        code = code +'%s: ' %i +'<u><font color=red>' +text+'</font></u>'
+                    else:
+                        code = code +'%s: ' %i +text
+                issue_detail = {'key':key, 'code':code}
+                issue_code_details.append(issue_detail)
+        return HttpResponse(json.dumps(issue_code_details), content_type="application/json")

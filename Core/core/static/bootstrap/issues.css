@@ -1,22 +1,28 @@
-.container{
-	margin-top: 80px;
+*{
+	margin:  0;
 }
 
-.footer{
-    height: 40px;
-    background-color: black;
-    position: absolute;
-    bottom: 0px;
-    left: 0px;
-    width: 100%;
+.container{
+	height: 100%;
+	min-height: 590px;
+	margin-top: 50px;
+	height: auto;
+	margin: 50px auto;
 }
 
 .list-group{
-	overflow: auto;
 	padding: 5px;
-	height: 500px;
 }
 
 .severity {
     color: red;
+}
+
+.footer{
+	height: 35px;
+	background-color: black;
+}
+
+html body{
+	height: 100%;
 }

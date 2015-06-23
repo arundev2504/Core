@@ -9,32 +9,22 @@
 
       {% load staticfiles %}
 
-    
+
     <script type="text/javascript">
-      function worker() {
-        var project_name_list = [];
-        {% for project in projects %}
-          project_name_list.push('{{project.project_name}}');
-        {% endfor %}
-        for(i = project_name_list.length - 1; i > -1; i--) {
-          project_name = project_name_list[i];
-          $.ajax({
-            url:'/issues_json/',
-            type:'POST',
-            data:{project_name:project_name},
-            // contentType:'application/json',
-            success: function(data) {
-              if (data.issues_no){
-                document.getElementById(project_name).textContent='Issues:'+data.issues_no;
-              }     
-              delete project_name_list[i]
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-            },
-            async: false
-          });
-        }
-        setTimeout(worker, 10000);
+      function refreshIssueNo() {
+        $.ajax({
+          url:'/issues_json/',
+          type:'GET',
+          contentType:'application/json',
+          success: function(data) {
+            $.each(data, function(index, element) {
+              document.getElementById(element.projects_name).textContent='Issues:'+element.issues_no;
+            });
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+          }
+        });
+        setTimeout(refreshIssueNo, 8000);
       }
     </script>
     <link href="{% static 'bootstrap/projectlist.css' %}" type="text/css" rel="stylesheet">
@@ -49,7 +39,7 @@
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
   </head>
-  <body onload="worker()">
+  <body onload="refreshIssueNo()">
       <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
         <div class="navbar-header">
           <a class="navbar-brand" href="/projectlist/">Projects</a>
@@ -82,9 +72,7 @@
           {% endfor %}        
       </div>
     </div>
-    <footer class="footer">
-    <div class="container">
-    </div>
-  </footer>
+    <div class="footer">
+  </div>
   </body>
 </html>
