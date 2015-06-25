@@ -7,7 +7,6 @@ class CoreUser(AbstractUser):
     user_token = models.CharField(max_length=200, blank = True, null = True)
     user_mobile = models.IntegerField(blank = True, null = True)
 
-
 class Project(models.Model):
     project_name = models.CharField(max_length=100)
     repo_url = models.CharField(max_length=200)
@@ -17,3 +16,5 @@ class Project(models.Model):
     commits_url = models.CharField(max_length=200)
     project_path = models.CharField(max_length=200, blank=True, null=True)
     language = models.CharField(max_length=20, blank=True, null=True)
+    def __str__(self):
+        return self.project_name

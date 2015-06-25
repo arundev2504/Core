@@ -19,10 +19,9 @@ from coreapp import views
 import os
 
 urlpatterns = [
-    url(r'^admin/$', include(admin.site.urls)),
+    url(r'^admin/', include(admin.site.urls)),
     url(r'^login/$', views.login, name = 'login'),
     url(r'^logout/$', views.logout, name = 'logout'),
-    # url('', include('social.apps.django_app.urls', namespace='social')),
     url(r'^callback', views.callback, name = 'callback'),
     url(r'^projectlist/$', views.project_list, name = 'projectlist'),
     url(r'^projectlist/issues/(?P<project_id>\d+)/', views.issues, name = 'issues'),
@@ -37,3 +36,8 @@ urlpatterns = [
 site_media = os.path.join(
     os.path.dirname(__file__), 'site_media'
 )
+
+admin.site.site_header = 'CORE Administration'
+admin.site.site_title = 'CORE Admin'
+admin.site.index_title = 'CORE App'
+admin.site.site_url = '/login/'
