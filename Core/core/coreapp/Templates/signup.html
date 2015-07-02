@@ -1,0 +1,51 @@
+<html>
+<head>
+    {% load staticfiles %}
+	<title>CORE Signup</title>
+    <link href="{% static 'bootstrap/signup.css' %}" type="text/css" rel="stylesheet">
+    <link href="{% static 'bootstrap/bootstrap.min.css' %}" rel="stylesheet">
+    <script type="text/javascript">
+        {% for message in messages %}
+        alert('{{ message }}');
+        {% endfor %}
+    </script>
+    <script src="{% static 'coreapp/js/signup_validate.js' %}" type="text/javascript"> </script>  
+</head>
+<body>
+<form action="/signup/" method="post" name="signupForm">
+      {% csrf_token %}
+<div class="container-signup">      
+    <div class="signup">
+        <h2>Get Started</h2>
+        <div class="field" name="username">            
+            {{ signup_form.username }}
+            <div class="error">
+                {{ signup_form.username.errors }}
+            </div>             
+        </div>    
+        <div class="field"> 
+            {{ signup_form.email }}
+            <div class="error">
+                {{signup_form.email.errors}}
+            </div>              
+        </div>    
+        <div class="field">     
+            {{ signup_form.password }}
+            <div class="error">
+                {{ signup_form.password.errors}}
+            </div>      
+        </div>     
+        <div class="field">    
+            <input type="password" id="re_password" placeholder=" Confirm Password" name="re_password"><br>
+        </div>    
+        <div class="signupButton">
+            <input type="submit" name="signup" class="btn btn-lg btn-primary btn-block" value="Sign-up" onclick="return validateForm()">
+        </div> 
+        <div class="loginLink">
+            <a href="/login/manual/">Already an user, please sign-in</a> 
+        </div>    
+    </div>
+</div>    
+</form>
+</body>
+</html>

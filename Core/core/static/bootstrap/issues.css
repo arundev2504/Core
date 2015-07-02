@@ -14,8 +14,14 @@
 	padding: 5px;
 }
 
-.severity {
-    color: red;
+.heading_issue_major {
+	width: 100%;
+    padding: 3px;
+}
+
+.heading_issue_minor {
+	padding: 3px;
+	width: 100%;
 }
 
 .footer{

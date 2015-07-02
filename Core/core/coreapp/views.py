@@ -2,17 +2,21 @@ from django.shortcuts import render
 from django.shortcuts import render_to_response
 from .models import CoreUser,Project
 from django.template import RequestContext
+from .forms import LoginForm, SignupForm
 from django.views.decorators.csrf import csrf_exempt
 from django.http import  HttpResponse, HttpResponseRedirect
 from os.path import expanduser
 from django.core.files import File
+from django.contrib.auth.hashers import make_password, check_password
+from django.contrib import messages
 import requests
 import json
-import pickle
 import os
 import subprocess
 import re
 import linecache
+import datetime
+import hashlib
 
 def login(request):
     """
@@ -32,6 +36,45 @@ def login(request):
         return render_to_response('login.html',{'client_id':client_id, 'client_secret':client_secret}, RequestContext(request))
 
 
+def signup(request):
+    context = RequestContext(request)
+    if request.method == 'POST' and 'signup' in request.POST:
+        signup_form = SignupForm(request.POST)
+        if not signup_form.is_valid():
+            return render_to_response('signup.html', {'signup_form' : signup_form}, context)
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        email = request.POST.get('email')
+        hashed_password = make_password(password)
+        CoreUser.objects.create(username=username, password=hashed_password, email=email)
+        return render_to_response('manual_login.html', {'login_form' : LoginForm(initial={'username':username})}, context)
+    return render_to_response('signup.html', {'signup_form' : SignupForm()}, context)
+
+def manual_login(request):
+    context = RequestContext(request)
+    if request.method == 'POST' and 'login' in request.POST:
+        login_form = LoginForm(request.POST)
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        try:
+            user = CoreUser.objects.get(username=username)
+        except CoreUser.DoesNotExist:
+            messages.info(request, 'Invalid user credentials')
+            return render_to_response('manual_login.html', {'login_form' : login_form}, context) 
+        if not check_password(password, user.password):
+            messages.info(request, 'Invalid user credentials')
+            return render_to_response('manual_login.html', {'login_form' : login_form}, context)
+        response = HttpResponseRedirect('/projectlist/')
+        now = datetime.datetime.now()
+        token = make_password(username+str(now))
+        user.user_token = token
+        user.save()
+        response.set_cookie('core_username', username)
+        response.set_cookie('token', token)
+        return response
+    return render_to_response('manual_login.html', {'login_form' : LoginForm()}, context)
+
+
 def callback(request):
     """
 
@@ -46,19 +89,30 @@ def callback(request):
         access_token = login_info['access_token']
         user_info_url = 'https://api.github.com/user?access_token=%s'% access_token
         prof_data = requests.get(user_info_url)
-        username = prof_data.json()['login']
-        user_obj, created = CoreUser.objects.get_or_create(username=username)
-        user_obj.user_token = access_token
-        user_obj.save()
-        response = HttpResponseRedirect('/projectlist/')
-        response.set_cookie('core_username', username)
-        response.set_cookie('token', access_token)
-        return response     
+        user = is_loggedin(request)
+
+        # if the user has logged in manually
+        if user:
+            user.github_token = access_token 
+            user.save()
+            return HttpResponseRedirect('/projects/new/github/')
+
+        # if the user logged in through GitHub
+        else:
+            username = prof_data.json()['login']
+            user_obj, created = CoreUser.objects.get_or_create(username=username)
+            user_obj.user_token = access_token
+            user_obj.github_token = access_token 
+            user_obj.save()
+            response = HttpResponseRedirect('/projectlist/')
+            response.set_cookie('core_username', username)
+            response.set_cookie('token', access_token)
+            return response     
     else:
         return HttpResponseRedirect('/login/')
 
 
-def projects(request):
+def projects_github(request):
     """
 
         The view function to display all projects from the user's GitHub account
@@ -67,39 +121,54 @@ def projects(request):
 
     user = is_loggedin(request)
     if user:
-        access_token = user.user_token
-        response = requests.get('https://api.github.com/user/repos?per_page=100&access_token=%s' % access_token)
-        projects_list = response.json()
-        projects = []
-        for project_dict in projects_list:
-            project, created  = Project.objects.get_or_create(project_name=project_dict['name'], core_user=user)             
-            commits_url = project_dict['commits_url']
-            commits_url = re.sub('\{/sha}$', '', commits_url)
-            project.commits_url = commits_url
-            project.clone_url = project_dict['clone_url']
-            project.repo_url = project_dict['url']
-            project.private = project_dict['private']
-            project.language = project_dict['language'].lower()
-            if created == True:
-                project.save()
-            if project.project_path == None:           
-                projects.append(project)
-        return render_to_response('Projects.html',{'projects_list':projects, 'username':user.username}, RequestContext(request))
+
+        # if user is not authorized to access GitHub API 
+        if not user.github_token:
+            with open('core/core.conf', 'r') as conf_file:
+                conf = json.load(conf_file)
+            client_id = conf["GITHUB_CLIENT_ID"]
+            client_secret = conf["GITHUB_CLIENT_SECRET"] 
+            return HttpResponseRedirect('https://github.com/login/oauth/authorize?scope=user:email&client_id='+client_id+'&client_secret='+client_secret)
+        
+        # if user already logged in through GitHub
+        else:
+            access_token = user.github_token
+            response = requests.get('https://api.github.com/user/repos?per_page=100&access_token=%s' % access_token)
+            projects_list = response.json()
+            projects = []
+            for project_dict in projects_list:
+                try:
+                    project = Project.objects.get(project_name=project_dict['name'], core_user=user)
+                except Project.DoesNotExist:
+                    project = Project(project_name=project_dict['name'])
+                    commits_url = project_dict['commits_url']
+                    commits_url = re.sub('\{/sha}$', '', commits_url)
+                    project.commits_url = commits_url
+                    project.clone_url = project_dict['clone_url']
+                    project.repo_url = project_dict['url']
+                    project.private = project_dict['private']
+                    project.language = project_dict['language'].lower()
+                    project.save()
+                    project.core_user.add(user)
+                if project.project_path == None:           
+                    projects.append(project)
+            return render_to_response('Projects.html',{'projects_list':projects, 'username':user.username}, RequestContext(request))
     else:
         return HttpResponseRedirect('/login/')
 
 
 @csrf_exempt
 def clone_projects(request):
-    if is_loggedin(request):
+    user = is_loggedin(request)
+    if user:
         repo_name = request.POST.get('repo_name')
         clone_url = request.POST.get('clone_url')
-        username = request.POST.get('username')
+        project_id = request.POST.get('project_id')
         home = expanduser("~")
-        path = '{}/core_app/github/user/repos/{}'.format(home,repo_name)
+        path = '{}/core_app/github/{}/repos/{}'.format(home, user.username, repo_name)
         url = "git clone {} {}".format(clone_url,path)
         os.system("git clone {} {}".format(clone_url,path))
-        project = Project.objects.get(core_user__username=username, project_name=repo_name)
+        project = Project.objects.get(id=project_id)
         project.project_path = path
         project.save()
         f = open(path+'/sonar-project.properties', 'w')
@@ -137,7 +206,7 @@ def project_list(request):
     user = is_loggedin(request)
     if user:
         username = user.username
-        projects = Project.objects.filter(core_user__username=username).exclude(project_path=None)
+        projects = Project.objects.filter(core_user=user).exclude(project_path=None)
         p = []
         for project in projects:
             try:
@@ -168,7 +237,7 @@ def issues(request, project_id):
             project = Project.objects.get(id=project_id)
         except Project.DoesNotExist:
             return HttpResponse("You are not authorized to view this project details")
-        if project.core_user.username == user.username:
+        if user in project.core_user.all():
             project_name = project.project_name
             response = requests.get('http://localhost:9000/sonar/api/issues/search?componentKeys=%s' % project_name)
             response_json = response.json()
@@ -195,6 +264,7 @@ def logout(request):
     user = is_loggedin(request)
     if user:
         user.user_token = ''
+        user.github_token = ''
         user.save()
         response = HttpResponseRedirect('/login/')
         response.delete_cookie('core_username')
@@ -269,7 +339,7 @@ def get_issues_code(request):
             if 'line' in issue.keys():
                 key = issue['key']
                 line_no = issue['line']
-                project_path = Project.objects.get(project_name=project_name).project_path
+                project_path = Project.objects.get(project_name=project_name, core_user=user).project_path
                 component_path = issue['component']
                 file_path = re.sub(project_name+':', project_path+'/', component_path)
                 if line_no == 1:
@@ -282,7 +352,7 @@ def get_issues_code(request):
                 for i in range(start_limit,end_limit+1):
                     text = linecache.getline(file_path, i)
                     if i == line_no:
-                        code = code +'%s: ' %i +'<u><font color=red>' +text+'</font></u>'
+                        code = code +'%s: ' %i +'<font color=red>' +text+'</font>'
                     else:
                         code = code +'%s: ' %i +text
                 issue_detail = {'key':key, 'code':code}

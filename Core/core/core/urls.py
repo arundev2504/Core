@@ -19,13 +19,15 @@ from coreapp import views
 import os
 
 urlpatterns = [
-    url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin', include(admin.site.urls)),
     url(r'^login/$', views.login, name = 'login'),
+    url(r'^login/manual/$', views.manual_login, name = 'manual_login'),
+    url(r'^signup/$', views.signup, name = 'signup'),
     url(r'^logout/$', views.logout, name = 'logout'),
     url(r'^callback', views.callback, name = 'callback'),
     url(r'^projectlist/$', views.project_list, name = 'projectlist'),
     url(r'^projectlist/issues/(?P<project_id>\d+)/', views.issues, name = 'issues'),
-    url(r'^projects/new/github/$', views.projects, name = 'projects'),
+    url(r'^projects/new/github/$', views.projects_github, name = 'projects'),
     url(r'^projects/new/$', views.new_project, name = 'new_project'),
     url(r'^projects/clone/$', views.clone_projects, name = 'clone_projects'),
     url(r'^issues_json/$', views.get_issues_json, name = 'issues_json'),

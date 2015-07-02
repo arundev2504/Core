@@ -18,31 +18,6 @@
     <link href="http://getbootstrap.com/examples/dashboard/dashboard.css" rel="stylesheet">
 
 </head>
-
-<!--<body>-->
-    <!--&lt;!&ndash; jQuery (necessary for Bootstrap's JavaScript plugins) &ndash;&gt;-->
-    <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>-->
-    <!--&lt;!&ndash; Include all compiled plugins (below), or include individual files as needed &ndash;&gt;-->
-    <!--<script src="{{STATICFILES_DIRS}}js/bootstrap.min.js"></script>-->
-
-    <!--<div class="container">-->
-      <!--<h2>Projects</h2>-->
-      <!--<div class="panel panel-default">-->
-          <!--{% for project in projects_list %}-->
-            <!--<div class="panel-heading">-->
-                <!--<h3>{{project.project_name}}</h3>-->
-                <!--<form action = "/demo/" method = "post">-->
-                    <!--<input type="hidden" name="csrfmiddlewaretoken" value="{% csrf_token %}">-->
-                    <!--<input type="hidden" name="repo_name" value= {{project.project_name}} />-->
-                    <!--<input type="hidden" name="clone_url" value= {{project.clone_url}} />-->
-                    <!--<input class="btn btn-info btn-lg" type="submit" name="Download" value="Download" />-->
-                <!--</form>-->
-            <!--</div>-->
-          <!--{% endfor %}-->
-      <!--</div>-->
-    <!--</div>-->
-<!--</body>-->
-
 <body>
     <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
         <div class="navbar-header">
@@ -64,11 +39,10 @@
                 <form action = "/projects/clone/" method = "post">
                     <input type="hidden" name="repo_name" value= {{project.project_name}} />
                     <input type="hidden" name="clone_url" value= {{project.clone_url}} />
-                    <input type="hidden" name="username" value= {{username}} />             
+                    <input type="hidden" name="project_id" value= {{project.id}} />             
 
                     <div class="well well-sm">
                         <span class="glyphicon glyphicon-book"></span><b> {{project.project_name}} </b>
-                        <!--<input class="pull-right" type="submit" name="Download" value="Download"><span class="glyphicon glyphicon-download-alt"></span></input>-->
                         <button class="pull-right" type="submit" ><span class="glyphicon glyphicon-download-alt"></span></button>
                     </div>
                 </form>

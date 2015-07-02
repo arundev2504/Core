@@ -14,7 +14,6 @@
             url:'/issues_code/',
             type:'POST',
             data:{project_name:'{{project_name}}'},
-            // contentType:'application/json',
             success: function(data) {
                 $.each(data, function(index, element) {
                         var display_txt = element.code;
@@ -46,12 +45,19 @@
                 {% for file_name in file_names%}
                     </br><h3><span class="glyphicon glyphicon-file"></span>{{file_name}}</h3>
                     {% for issue in issues %}
-                        {% if file_name in issue.component %}
-                            {% if issue.line %}
-                                <li class="list-group-item">Issue: {{issue.message}}</br>Line No: {{issue.line}}</br>Status: {{issue.status}}, {{issue.debt}} debt</br><span class="glyphicon glyphicon-exclamation-sign severity">{{issue.severity}}</span><span class="pull-right glyphicon glyphicon-tags"> {{issue.tags.0}}</span></br></br><pre id="{{issue.key}}"></pre></li>
-                            {% else %}
-                                <li class="list-group-item">Issue: {{issue.message}}</br>{{issue.status}}, {{issue.debt}} debt</br><span class="glyphicon glyphicon-exclamation-sign severity">{{issue.severity}}</span></li>
-                            {% endif %}
+                        {% if file_name in issue.component %}                
+                            <li class="list-group-item">
+                                    {% if issue.severity == "MAJOR" %}
+                                        <div class="heading_issue_major" style="background-color:red; color:white">
+                                        <span class="glyphicon glyphicon-remove-circle">{{issue.severity}} {{issue.message}}</span> 
+                                        </div>
+                                    {% else %} 
+                                        <div class="heading_issue_minor" style="background-color:#e5e500; color:white">
+                                        <span class="glyphicon glyphicon-exclamation-sign">{{issue.severity}} {{issue.message}}</span>
+                                        </div> 
+                                    {% endif %}
+                                    Status: {{issue.status}}, {{issue.debt}} debt</br>{% if issue.line %}Line No: {{issue.line}}<span class="pull-right glyphicon glyphicon-tags"> {{issue.tags.0}}</span></br></br><pre id="{{issue.key}}"></pre>{% endif %}
+                            </li>              
                         {% endif %}
                     {% endfor %}
                 {% endfor %}
@@ -62,15 +68,3 @@
         </div>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
