@@ -11,7 +11,7 @@
     <script type="text/javascript">
     function getIssueCode() {
         $.ajax({
-            url:'/issues_code/',
+            url:'/api/issues_code/',
             type:'POST',
             data:{project_name:'{{project_name}}'},
             success: function(data) {
@@ -56,7 +56,7 @@
                                         <span class="glyphicon glyphicon-exclamation-sign">{{issue.severity}} {{issue.message}}</span>
                                         </div> 
                                     {% endif %}
-                                    Status: {{issue.status}}, {{issue.debt}} debt</br>{% if issue.line %}Line No: {{issue.line}}<span class="pull-right glyphicon glyphicon-tags"> {{issue.tags.0}}</span></br></br><pre id="{{issue.key}}"></pre>{% endif %}
+                                    Status: {{issue.status}}, {{issue.debt}} debt</br>{% if issue.line %}Line No: {{issue.line}}<span class="pull-right glyphicon glyphicon-tags"> {{issue.tags.0}}</span></br><pre id="{{issue.key}}"></pre>{% endif %}
                             </li>              
                         {% endif %}
                     {% endfor %}

@@ -30,8 +30,10 @@ urlpatterns = [
     url(r'^projects/new/github/$', views.projects_github, name = 'projects'),
     url(r'^projects/new/$', views.new_project, name = 'new_project'),
     url(r'^projects/clone/$', views.clone_projects, name = 'clone_projects'),
-    url(r'^issues_json/$', views.get_issues_json, name = 'issues_json'),
-    url(r'^issues_code/$', views.get_issues_code, name = 'issues_code'),
+    url(r'^api/issues_json/$', views.get_issues_json, name = 'issues_json'),
+    url(r'^api/issues_code/$', views.get_issues_code, name = 'issues_code'),
+    url(r'^api/user_list/', views.get_user_list, name='user_list'),
+    url(r'^api/share_project/', views.share_project, name='share_project'),
     url(r'^', views.login, name = 'index'),
 ]
 

@@ -7,13 +7,45 @@
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <title>Projects</title>
 
-      {% load staticfiles %}
+    {% load staticfiles %}
+    <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{% static 'bootstrap/projectlist.css' %}" type="text/css" rel="stylesheet">
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.8.23/themes/base/jquery-ui.css" type="text/css" media="all">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js" type="text/javascript"></script> 
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js" type="text/javascript"></script>
 
+    <script type="text/javascript">
+      $(function() {
+        $(".auto_complete").autocomplete({
+            source: "/api/user_list/",
+            minLength: 1,
+          });
+        });
+    </script>
 
+    <script>
+      function share(project_id) {
+        user_to = document.getElementById(project_id).value;
+        $.ajax({
+          url:'/api/share_project/',
+          type:'POST',
+          data:{project_id:project_id,shared_with:user_to},
+          success: function(data) {
+            document.getElementById(project_id).value = '';
+            if(data.indexOf("Success") > -1){
+              alert("Project successfully shared with "+user_to);
+            } else {
+              alert("This project is already shared with "+user_to);
+            }    
+          },
+        });
+        
+      }
+    </script>
     <script type="text/javascript">
       function refreshIssueNo() {
         $.ajax({
-          url:'/issues_json/',
+          url:'/api/issues_json/',
           type:'GET',
           contentType:'application/json',
           success: function(data) {
@@ -21,16 +53,13 @@
               document.getElementById(element.projects_name).textContent='Issues:'+element.issues_no;
             });
           },
-          error: function(jqXHR, textStatus, errorThrown) {
-          }
+          // error: function(jqXHR, textStatus, errorThrown) {
+          // }
         });
         setTimeout(refreshIssueNo, 8000);
       }
     </script>
-    <link href="{% static 'bootstrap/projectlist.css' %}" type="text/css" rel="stylesheet">
-
-    <!-- Bootstrap -->
-    <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
+    
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -46,12 +75,9 @@
         </div>
         <a class="pull-right navbar-brand" href="/logout/">Logout</a>
         <a class="pull-right navbar-brand" >{{username}}</a>
-    </nav>
+      </nav>
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-    <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <!-- <script src="{{STATICFILES_DIRS}}js/bootstrap.min.js"></script> -->
 
     <div class="container">
       <h2>Projects</h2>
@@ -60,8 +86,16 @@
       </div>
       <div class="container-projects">
           {% for project in projects %}
-            <div class="well well-sm" onclick="location.href = '/projectlist/issues/{{project.id}}/'">
-              <h3>{{project.project_name}}</h3></br>
+            <div class="well well-sm" >
+              <div class="col-lg-3 pull-right">
+                <div class="input-group">
+                  <input type="text" class="form-control auto_complete" id="{{project.id}}" placeholder="Search user">
+                  <span class="input-group-btn">
+                  <button class="btn btn-default" type="button" onclick="share({{project.id}})">Share</button>
+                  </span>
+                  </div>
+                </div>
+              <h3><a href="/projectlist/issues/{{project.id}}/">{{project.project_name}}</a></h3></br>
               {% if project.private == True%}          
                 <span class="badge">Private</span>
               {% else %}  

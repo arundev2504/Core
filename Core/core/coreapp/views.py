@@ -302,7 +302,7 @@ def get_issues_json(request):
     """
 
     user = is_loggedin(request)
-    if user and request.method == 'GET':
+    if user and request.method == 'GET' and request.is_ajax():
         username = user.username
         projects_list = Project.objects.filter(core_user__username=username).exclude(project_path=None)
         issue_details = []
@@ -327,13 +327,13 @@ def get_issues_code(request):
 
     """
     user = is_loggedin(request)
-    if user and request.method == 'POST':
+    if user and request.method == 'POST' and request.is_ajax():
         project_name = request.POST.get('project_name')
         response = requests.get('http://localhost:9000/sonar/api/issues/search?componentKeys=%s' %project_name)
         response_json = response.json()
         issues_list = response_json['issues']
         if not issues_list:
-            return HttpResponse("No issues found")
+            return HttpResponse("fail", content_type="application/json")
         issue_code_details = []
         for issue in issues_list:
             if 'line' in issue.keys():
@@ -358,3 +358,38 @@ def get_issues_code(request):
                 issue_detail = {'key':key, 'code':code}
                 issue_code_details.append(issue_detail)
         return HttpResponse(json.dumps(issue_code_details), content_type="application/json")
+
+
+@csrf_exempt
+def get_user_list(request):
+    if request.is_ajax():
+        user = is_loggedin(request)
+        q = request.GET.get('term', '')
+        users = CoreUser.objects.filter(username__icontains = q ).exclude(username=user.username)[:20]
+        results = []
+        for user in users:
+            user_json = {}
+            user_json['id'] = user.id
+            user_json['value'] = user.username
+            results.append(user_json)
+        data = json.dumps(results)
+    else:
+        data = 'fail'
+    return HttpResponse(data, content_type="application/json")
+
+
+@csrf_exempt
+def share_project(request):
+    if request.method == 'POST' and request.is_ajax():
+        project_id = request.POST.get('project_id')
+        shared_with = request.POST.get('shared_with')
+        project = Project.objects.get(id=project_id)
+        shared_user = CoreUser.objects.get(username=shared_with)
+        if project.core_user.filter(username=shared_with).exists():
+            result = 'User already exists'
+            data = json.dumps(result)
+            return HttpResponse(data, content_type="application/json")
+        project.core_user.add(shared_user)
+        result = 'Success'
+        data = json.dumps(result)
+        return HttpResponse(data, content_type="application/json")
