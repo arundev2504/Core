@@ -6,21 +6,11 @@ from django.db.models import signals
 from django.conf import settings
 from django.core.mail import send_mail
 
-# def new_user_email(sender, instance, created, **kwargs):
-#     send_mail('CoreApp New User', 'Here is the message.', 'noreply@noreply.com',
-#     ['dawn@qburst.com'], fail_silently=False)
-
 
 class CoreUser(AbstractUser):
     user_token = models.CharField(max_length=200, blank = True, null = True)
     github_token = models.CharField(max_length=200, blank = True, null = True)
     user_mobile = models.IntegerField(blank = True, null = True)
-
-    # def save(self, *args, **kwargs):
-    #     self.password = make_password(self.password)
-    #     super(CoreUser, self).save(*args, **kwargs)
-
-# signals.post_save.connect(new_user_email, sender=settings.AUTH_USER_MODEL)
 
 
 class Project(models.Model):

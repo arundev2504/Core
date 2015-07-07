@@ -22,8 +22,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '0d+u%g24m^uc1dic#5s1)jy**h#02^#)a_h!nr4jemmk6bggxv'
 
-GITHUB_APP_ID = '6f1b7590bb85caa50b0e'
-GITHUB_API_SECRET = '8d2642a02a2afa92d4308a62495cead5501b78dd'
 
 GITHUB_EXTENDED_PERMISSIONS = []
 
@@ -43,7 +41,6 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'coreapp',
-    # 'social.apps.django_app.default',
     'requests',
 )
 
@@ -55,7 +52,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
+    # 'django.middleware.security.SecurityMiddleware',
 )
 
 ROOT_URLCONF = 'core.urls'
@@ -65,7 +62,7 @@ AUTH_USER_MODEL = 'coreapp.CoreUser'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': ['coreapp/Templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -73,8 +70,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'social.apps.django_app.context_processors.backends',
-                'social.apps.django_app.context_processors.login_redirect',
             ],
         },
     },
@@ -89,15 +84,15 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'core_db',
+        'NAME': 'AUTO_TOOL',
         'USER': 'root',
-        'PASSWORD': ''
+        'PASSWORD': 'root'
     }
 }
 
 
 AUTHENTICATION_BACKENDS = (
-    'social_auth.backends.contrib.github.GithubBackend',
+   'django.contrib.auth.backends.ModelBackend',
 )
 
 # Internationalization
@@ -116,9 +111,25 @@ USE_TZ = True
 
 PROJECT_DIR = os.path.abspath(os.path.dirname(__file__))
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_ROOT = os.path.join(PROJECT_DIR,'static')
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+
+
+PASSWORD_HASHERS = (
+    'django.contrib.auth.hashers.MD5PasswordHasher',
+    'django.contrib.auth.hashers.BCryptPasswordHasher',
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',       
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.SHA1PasswordHasher',
+)
+
+# EMAIL_HOST='smtp.gmail.com'
+# EMAIL_PORT=587
+# EMAIL_HOST_PASSWORD='qburst123'
+# EMAIL_HOST_USER='djangomailid@gmail.com'
+# EMAIL_USE_TLS = True
+
+AUTH_USER_MODEL = 'coreapp.CoreUser'
